@@ -1,8 +1,6 @@
-This program provides voice typing on Linux based systems. It records audio from the user's device in real time, and uses the [Whisper library](https://github.com/openai/whisper) to transcribe it to text. It then simulates a keyboard to use this dictated text as an input method. When loaded this tool creates an icon in the system tray that allows activation and deactivation of the speech to text conversion. In the creation of this tool, I have used code from [whisper_mic](https://github.com/mallorbc/whisper_mic). The microphone icon used in the system tray is based on an [icon from the OpenMoji project](https://openmoji.org/library/emoji-1F3A4/). 
+This program provides voice typing on Linux based systems. It records audio from the user's device in real time, and uses the [Whisper library](https://github.com/openai/whisper) to transcribe it to text. It then simulates a keyboard to use this dictated text as an input method. When loaded this tool creates an icon in the system tray that allows activation and deactivation of the speech to text conversion. 
 
-I am not affiliated with the developers of Whisper or any of the other upstream libraries used in the creation of this program.
- 
-It currently defaults to the small quality model, this is configurable by editing the configuration file.  
+ It currently defaults to the small quality model, this is configurable by editing the configuration file.  
 
 **Installation of Dependencies**
 
@@ -56,8 +54,14 @@ Of note are the following two configuration options.
 
 `auto_mic_off_time`   This configuration option sets how long the program will wait to shut off the microphone due to inactivity.
  
+**Attribution** 
 
-   
+In the creation of this tool, I have used code from [whisper_mic](https://github.com/mallorbc/whisper_mic). 
+
+The microphone icon and the robot face icon used in the system tray is based on [icons from the OpenMoji project](https://openmoji.org/library/emoji-1F3A4/). The icons are under the Creative Commons Attribution Share Alike license 
+
+I am not affiliated with the developers of Whisper or any of the other upstream libraries used in the creation of this program.
+
 
 
 
