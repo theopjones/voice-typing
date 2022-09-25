@@ -1,3 +1,4 @@
+nicegui
 pynput
 numpy
 tqdm

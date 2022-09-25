@@ -1,0 +1,6 @@
+[ModelAttributes]
+model = medium
+english = True
+energy = 700
+dynamic_energy = False
+pause = 1.5

@@ -21,8 +21,15 @@ import speech_recognition as sr
 import whisper
 import tempfile
 import os
+import subprocess, sys
+from subprocess import call
+import time
+
+import configparser
+import shutil
 
 import threading
+import queue
 
 from PyQt5.QtGui import * 
 from PyQt5.QtWidgets import * 
@@ -35,19 +42,15 @@ DictationOn = False
 
 def HandleOutputOfDictation(predicted_text):
     global keyboard
+    print(predicted_text)
     keyboard.type(predicted_text)
+    if len(predicted_text) > 10: 
+        keyboard.type("\n")
 
 def DictationLoop():
     global DictationOn
     global audio_model
-    #Set Config Values
-    english = True
-    energy = 300
-    dynamic_energy = False
-    pause = 0.8
-
     temp_dir = tempfile.mkdtemp()
-    save_path = os.path.join(temp_dir, "temp.wav")
 
     #load the speech recognizer and set the initial energy threshold and pause threshold
     r = sr.Recognizer()
@@ -59,15 +62,15 @@ def DictationLoop():
         print("Say something!")
         while DictationOn == True:
             #get and save audio to wav file
+            print("Recording Audio")
+            save_path = os.path.join(temp_dir, str(time.time()) + "temp.wav")
             audio = r.listen(source)
             data = io.BytesIO(audio.get_wav_data())
             audio_clip = AudioSegment.from_file(data)
             audio_clip.export(save_path, format="wav")
-
-            result = audio_model.transcribe(save_path)
-            predicted_text = result["text"]
-            if DictationOn == True:
-                HandleOutputOfDictation(predicted_text)
+            print("Recorded Sound Clip")
+            print(DictationOn)
+            sound_recording_queue.put_nowait(save_path)
     print("Dictation Loop Stopped")                      
 
 def TrayIconClicked(): 
@@ -82,9 +85,42 @@ def TrayIconClicked():
         DictationOn = False
         tray.setIcon(MicOff)
 
-#load model
-model = "medium"
-audio_model = whisper.load_model(model)
+def ModelLoop():
+    audio_model = whisper.load_model(model)
+    print("Model Active")
+    while True:
+        if sound_recording_queue.empty() == False:
+            file_save_path = sound_recording_queue.get_nowait()
+            result = audio_model.transcribe(file_save_path)
+            os.remove(file_save_path) 
+            predicted_text = result["text"]
+            if DictationOn == True:
+                HandleOutputOfDictation(predicted_text)
+
+def OpenConfigFileInEditor():
+    subprocess.call(["xdg-open", config_file_path])
+
+#load config file 
+home_folder_path = os.path.expanduser('~')
+config_file_path = os.path.join(home_folder_path, "voice_typing_config.txt")
+
+if not os.path.exists(config_file_path):
+    shutil.copyfile("sampleconfig.txt", config_file_path)
+
+ConfigFile = configparser.ConfigParser()
+ConfigFile.read(config_file_path)
+
+model = ConfigFile['ModelAttributes']['model']
+english = bool(ConfigFile['ModelAttributes']['english'])
+energy = int(ConfigFile['ModelAttributes']['energy'])
+dynamic_energy = bool(ConfigFile['ModelAttributes']['dynamic_energy'])
+pause = float(ConfigFile['ModelAttributes']['pause'])
+
+#create background thead for model
+sound_recording_queue = queue.SimpleQueue()
+model_thread = threading.Thread(target=ModelLoop)
+model_thread.daemon = True
+model_thread.start()
 
 #keyboard control 
 keyboard = Controller()
@@ -105,10 +141,15 @@ tray.activated.connect(TrayIconClicked)
 # Creating the menu 
 menu = QMenu()
   
-# To quit the app
+# Quit Menu Item
 quit = QAction("Quit")
 quit.triggered.connect(app.quit)
 menu.addAction(quit)
+
+# Settings Menu Item
+settingsmenu = QAction("Settings")
+settingsmenu.triggered.connect(OpenConfigFileInEditor)
+menu.addAction(settingsmenu)
 
 # Adding options to the System Tray
 tray.setContextMenu(menu)
