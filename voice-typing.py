@@ -42,12 +42,14 @@ DictationOn = False
 
 def HandleOutputOfDictation(predicted_text):
     global keyboard
+    global last_dictation_time
     print(predicted_text)
     keyboard.type(predicted_text)
-    if len(predicted_text) > 10: 
+    if len(predicted_text) > 3: 
         keyboard.type("\n")
+        last_dictation_time = time.time()
 
-def DictationLoop():
+def MicLoop():
     global DictationOn
     global audio_model
     temp_dir = tempfile.mkdtemp()
@@ -62,23 +64,33 @@ def DictationLoop():
         print("Say something!")
         while True:
             if DictationOn == True: 
+             if (int(time.time()) - last_dictation_time) > auto_mic_off_time:
+                DictationOn = False
+                tray.setIcon(MicOff)
              #get and save audio to wav file
              print("Recording Audio")
-             save_path = os.path.join(temp_dir, str(time.time()) + "temp.wav")
-             audio = r.listen(source)
-             data = io.BytesIO(audio.get_wav_data())
-             audio_clip = AudioSegment.from_file(data)
-             audio_clip.export(save_path, format="wav")
-             print("Recorded Sound Clip")
-             print(DictationOn)
-             sound_recording_queue.put_nowait(save_path)
+             try:
+               save_path = os.path.join(temp_dir, str(time.time()) + "temp.wav")
+               audio = r.listen(source, timeout = 30)
+               data = io.BytesIO(audio.get_wav_data())
+               audio_clip = AudioSegment.from_file(data)
+               audio_clip.export(save_path, format="wav")
+               print("Recorded Sound Clip")
+               print(DictationOn)
+               sound_recording_queue.put_nowait(save_path)
+             except sr.WaitTimeoutError: 
+                pass
     print("Dictation Loop Stopped")                      
 
 def TrayIconClicked(): 
     global DictationOn
+    global last_dictation_time
+    global sound_recording_queue
+    last_dictation_time = int(time.time())
     if DictationOn == False: 
        DictationOn = True
        tray.setIcon(MicOn)
+       sound_recording_queue = queue.SimpleQueue()
     else:  
         DictationOn = False
         tray.setIcon(MicOff)
@@ -95,7 +107,6 @@ def ModelLoop():
             predicted_text = result["text"]
             if DictationOn == True:
                 HandleOutputOfDictation(predicted_text)
-            if DictationOn == True:
                 tray.setIcon(MicOn)
             if DictationOn == False:
                tray.setIcon(MicOff)     
@@ -118,6 +129,7 @@ english = bool(ConfigFile['ModelAttributes']['english'])
 energy = int(ConfigFile['ModelAttributes']['energy'])
 dynamic_energy = bool(ConfigFile['ModelAttributes']['dynamic_energy'])
 pause = float(ConfigFile['ModelAttributes']['pause'])
+auto_mic_off_time = int(ConfigFile['VoiceTypingAttributes']['auto_mic_off_time'])
 
 #create background thead for model
 sound_recording_queue = queue.SimpleQueue()
@@ -126,12 +138,15 @@ model_thread.daemon = True
 model_thread.start()
 
 #Create background thread for microphone listener 
-thread = threading.Thread(target=DictationLoop)
+thread = threading.Thread(target=MicLoop)
 thread.daemon = True
 thread.start()
 
 #keyboard control 
 keyboard = Controller()
+
+#time since last dictation
+last_dictation_time = int(time.time())
 
 app = QApplication([])
 app.setQuitOnLastWindowClosed(False)        

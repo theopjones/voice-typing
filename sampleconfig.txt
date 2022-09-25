@@ -4,3 +4,6 @@ english = True
 energy = 700
 dynamic_energy = True
 pause = 1.5
+
+[VoiceTypingAttributes]
+auto_mic_off_time = 60

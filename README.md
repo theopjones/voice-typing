@@ -6,7 +6,7 @@ It currently defaults to the small quality model, this is configurable by editin
 
 **Installation of Dependencies**
 
-Using this tool requires first installing Whisper. 
+Using this tool requires first installing Whisper. It is recommended that you confirm that Whisper is fully working before trying this program. 
 
 PyQt5 is also a dependency, it can be installed from the package manager on most linux distros. 
 
@@ -36,9 +36,11 @@ Other dependencies are in the requirements.txt file, and can be installed with `
    
  Once Whisper has finished transcribing the audio, the program will then simulate a keyboard and type the resulted transcribed text into the currently open and selected text input.It is recommended that when dictating into the program you have a text input with a method of some kind opened and selected. For the typing simulation to work, you will have to have the dialog box selected as if you were about to type into it with your keyboard.
  
-  If it is your first time using the program with a given model, the model will be downloaded first before Whisper can transcribe any of the audio collected.Therefore, recorded audio will remain in the queue until this downloading process has been completed. You can check the output in the terminal to determine the status of this downloading process.
+ If it is your first time using the program with a given model, the model will be downloaded first before Whisper can transcribe any of the audio collected.Therefore, recorded audio will remain in the queue until this downloading process has been completed. You can check the output in the terminal to determine the status of this downloading process.
    
 Since the program is sending the recorded audio to Whisper and also because the audio recording does not stop until the program has detected enough of a pause there will be a delay between when you finish talking and when the text is typed.  The delay is determined by the exact configuration parameters you have used in the config file and also by the dictation quality you have selected by choosing the model.  The delay is also determined by the performance capabilities of the computer you are using. If it is too slow, it is recommended that you choose a lighter weight model, although this comes at the expense of dictation quality.
+
+Dictation will automatically shut off after about 60 seconds of inactivity. This is a configurable setting. 
  
  A video of usage of the program can be found here [https://peertube.theopjones.blog/w/6x5yS96TNnTTdrf11Vwhuh](https://peertube.theopjones.blog/w/6x5yS96TNnTTdrf11Vwhuh) 
  
@@ -51,7 +53,11 @@ Of note are the following two configuration options.
 `model`  This configuration option selects which model to use. The models vary by file size and performance required in the computer being used. The model options are the same as in Whisper. 
 
 `energy`  This configuration option selects the threshold of audio volume required for the program to determine that speech is ongoing and therefore to send recorded audio to whisper. Higher values mean a higher threshold for volume. Setting this parameter too low means that the program will sometimes detect speech ongoing when there is not speech ongoing. The effect of this will be to send empty audio files to Whisper for transcription. Whisper may detect phantom audio in these files and therefore generate text that does not correspond to anything spoken into the program.
+
+`auto_mic_off_time`   This configuration option sets how long the program will wait to shut off the microphone due to inactivity.
  
+
+   
 
 
 
