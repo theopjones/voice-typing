@@ -60,26 +60,24 @@ def DictationLoop():
     print("Starting Dictation Loop")   
     with sr.Microphone(sample_rate=16000) as source:
         print("Say something!")
-        while DictationOn == True:
-            #get and save audio to wav file
-            print("Recording Audio")
-            save_path = os.path.join(temp_dir, str(time.time()) + "temp.wav")
-            audio = r.listen(source)
-            data = io.BytesIO(audio.get_wav_data())
-            audio_clip = AudioSegment.from_file(data)
-            audio_clip.export(save_path, format="wav")
-            print("Recorded Sound Clip")
-            print(DictationOn)
-            sound_recording_queue.put_nowait(save_path)
+        while True:
+            if DictationOn == True: 
+             #get and save audio to wav file
+             print("Recording Audio")
+             save_path = os.path.join(temp_dir, str(time.time()) + "temp.wav")
+             audio = r.listen(source)
+             data = io.BytesIO(audio.get_wav_data())
+             audio_clip = AudioSegment.from_file(data)
+             audio_clip.export(save_path, format="wav")
+             print("Recorded Sound Clip")
+             print(DictationOn)
+             sound_recording_queue.put_nowait(save_path)
     print("Dictation Loop Stopped")                      
 
 def TrayIconClicked(): 
     global DictationOn
     if DictationOn == False: 
        DictationOn = True
-       thread = threading.Thread(target=DictationLoop)
-       thread.daemon = True
-       thread.start()
        tray.setIcon(MicOn)
     else:  
         DictationOn = False
@@ -121,6 +119,11 @@ sound_recording_queue = queue.SimpleQueue()
 model_thread = threading.Thread(target=ModelLoop)
 model_thread.daemon = True
 model_thread.start()
+
+#Create background thread for microphone listener 
+thread = threading.Thread(target=DictationLoop)
+thread.daemon = True
+thread.start()
 
 #keyboard control 
 keyboard = Controller()

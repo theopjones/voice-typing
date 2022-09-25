@@ -2,5 +2,5 @@
 model = medium
 english = True
 energy = 700
-dynamic_energy = False
+dynamic_energy = True
 pause = 1.5
