@@ -2,7 +2,7 @@ This program provides voice typing on Linux based systems. It records audio from
 
 I am not affiliated with the developers of Whisper or any of the other upstream libraries used in the creation of this program.
  
-It currently defaults to the medium quality model, I plan to eventually make this configurable.  
+It currently defaults to the small quality model, this is configurable by editing the configuration file.  
 
 **Installation of Dependencies**
 
@@ -30,6 +30,10 @@ Other dependencies are in the requirements.txt file, and can be installed with `
  
  Once you speak into the microphone, the program will recognize that you are speaking into it. It will then send the audio you're recording to Whisper once the program has detected a sufficiently long pause in your speaking. This pause defaults to 1.5 seconds, although this is configurable in the config file. Recording and pause detection is done using the [speech_recognition](https://pypi.org/project/SpeechRecognition/) library.
  
+ When Whisper is processing the recorded audio, the icon changes to a picture of a robot face.
+ 
+ ![Robot Face](1F916_color.png)
+   
  Once Whisper has finished transcribing the audio, the program will then simulate a keyboard and type the resulted transcribed text into the currently open and selected text input.It is recommended that when dictating into the program you have a text input with a method of some kind opened and selected. For the typing simulation to work, you will have to have the dialog box selected as if you were about to type into it with your keyboard.
  
   If it is your first time using the program with a given model, the model will be downloaded first before Whisper can transcribe any of the audio collected.Therefore, recorded audio will remain in the queue until this downloading process has been completed. You can check the output in the terminal to determine the status of this downloading process.

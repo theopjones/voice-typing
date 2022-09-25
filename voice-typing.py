@@ -88,12 +88,17 @@ def ModelLoop():
     print("Model Active")
     while True:
         if sound_recording_queue.empty() == False:
+            tray.setIcon(robot_face)
             file_save_path = sound_recording_queue.get_nowait()
             result = audio_model.transcribe(file_save_path)
             os.remove(file_save_path) 
             predicted_text = result["text"]
             if DictationOn == True:
                 HandleOutputOfDictation(predicted_text)
+            if DictationOn == True:
+                tray.setIcon(MicOn)
+            if DictationOn == False:
+               tray.setIcon(MicOff)     
 
 def OpenConfigFileInEditor():
     subprocess.call(["xdg-open", config_file_path])
@@ -134,6 +139,7 @@ app.setQuitOnLastWindowClosed(False)
 #load icons
 MicOff = QIcon("1F507_color.png")
 MicOn = QIcon("1F3A4_color.png")
+robot_face = QIcon("1F916_color.png")
 
 # Adding item on the menu bar
 tray = QSystemTrayIcon()

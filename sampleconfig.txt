@@ -1,5 +1,5 @@
 [ModelAttributes]
-model = medium
+model = small
 english = True
 energy = 700
 dynamic_energy = True
