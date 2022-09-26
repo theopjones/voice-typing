@@ -65,7 +65,6 @@ def ListenThenSendAudioToWhisper(sound_recording_queue,speech_listener):
 def MicLoop(speech_listener):
     global DictationOn
     global audio_model
-    #load the speech recognizer and set the initial energy threshold and pause threshold
     while True:
         if DictationOn == True: 
          if (int(time.time()) - last_dictation_time) > auto_mic_off_time:
