@@ -1,6 +1,8 @@
 [ModelAttributes]
 model = small
 english = True
+
+[ListenerAttributes]
 energy = 700
 dynamic_energy = True
 pause = 1.5

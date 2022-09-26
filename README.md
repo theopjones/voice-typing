@@ -1,6 +1,6 @@
 This program provides voice typing on Linux based systems. It records audio from the user's device in real time, and uses the [Whisper library](https://github.com/openai/whisper) to transcribe it to text. It then simulates a keyboard to use this dictated text as an input method. When loaded this tool creates an icon in the system tray that allows activation and deactivation of the speech to text conversion. 
 
- It currently defaults to the small quality model, this is configurable by editing the configuration file.  
+It currently defaults to the small quality model, this is configurable by editing the configuration file.  
 
 **Installation of Dependencies**
 
@@ -56,9 +56,9 @@ Of note are the following two configuration options.
  
 **Attribution** 
 
-In the creation of this tool, I have used code from [whisper_mic](https://github.com/mallorbc/whisper_mic). 
+The microphone icon and the robot face icon used in the system tray is based on [icons from the OpenMoji project](https://openmoji.org/library/emoji-1F3A4/). The icons are under the Creative Commons Attribution Share Alike license.
 
-The microphone icon and the robot face icon used in the system tray is based on [icons from the OpenMoji project](https://openmoji.org/library/emoji-1F3A4/). The icons are under the Creative Commons Attribution Share Alike license 
+All other files in this Git repo are dedicated to the public domain using the CC0.
 
 I am not affiliated with the developers of Whisper or any of the other upstream libraries used in the creation of this program.
 

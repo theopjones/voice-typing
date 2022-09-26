@@ -1,23 +1,14 @@
 '''
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
+    Written in 2022 by Theodore Jones tjones2@fastmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
+    To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.    
-
-    This file contains modified code from https://github.com/mallorbc/whisper_mic
+    You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>. 
 '''
 
 import io
 from pydub import AudioSegment
-import speech_recognition as sr
+import speech_recognition
 import whisper
 import tempfile
 import os
@@ -49,38 +40,38 @@ def HandleOutputOfDictation(predicted_text):
         keyboard.type("\n")
         last_dictation_time = time.time()
 
-def MicLoop():
+def SaveCollectedAudioClipToTempFolder(audio_clip):
+    global temporary_folder
+    audio_file_path = os.path.join(temporary_folder,"voice_recording_" + str(time.time()) + ".wav")
+    audio_clip.export(audio_file_path, format="wav")
+    return audio_file_path
+
+def ListenUntilSoundIsHeard(speech_listener):
+    global microphone_device
+    with microphone_device as dictation_audio_source:
+        raw_audio_of_speech = speech_listener.listen(dictation_audio_source, timeout = 30)
+        processed_audio_of_speech = io.BytesIO(raw_audio_of_speech.get_wav_data())
+        audio_segment_to_be_sent_to_whisper = AudioSegment.from_file(processed_audio_of_speech)
+    return audio_segment_to_be_sent_to_whisper
+
+def ListenThenSendAudioToWhisper(sound_recording_queue,speech_listener):
+    try:
+        path_to_recorded_audio_clip = SaveCollectedAudioClipToTempFolder(ListenUntilSoundIsHeard(speech_listener))
+        sound_recording_queue.put_nowait(path_to_recorded_audio_clip)
+    except speech_recognition.WaitTimeoutError:
+        pass
+
+
+def MicLoop(speech_listener):
     global DictationOn
     global audio_model
-    temp_dir = tempfile.mkdtemp()
-
     #load the speech recognizer and set the initial energy threshold and pause threshold
-    r = sr.Recognizer()
-    r.energy_threshold = energy
-    r.pause_threshold = pause
-    r.dynamic_energy_threshold = dynamic_energy
-    print("Starting Dictation Loop")   
-    with sr.Microphone(sample_rate=16000) as source:
-        print("Say something!")
-        while True:
-            if DictationOn == True: 
-             if (int(time.time()) - last_dictation_time) > auto_mic_off_time:
+    while True:
+        if DictationOn == True: 
+         if (int(time.time()) - last_dictation_time) > auto_mic_off_time:
                 DictationOn = False
                 tray.setIcon(MicOff)
-             #get and save audio to wav file
-             print("Recording Audio")
-             try:
-               save_path = os.path.join(temp_dir, str(time.time()) + "temp.wav")
-               audio = r.listen(source, timeout = 30)
-               data = io.BytesIO(audio.get_wav_data())
-               audio_clip = AudioSegment.from_file(data)
-               audio_clip.export(save_path, format="wav")
-               print("Recorded Sound Clip")
-               print(DictationOn)
-               sound_recording_queue.put_nowait(save_path)
-             except sr.WaitTimeoutError: 
-                pass
-    print("Dictation Loop Stopped")                      
+         ListenThenSendAudioToWhisper(sound_recording_queue,speech_listener)                     
 
 def TrayIconClicked(): 
     global DictationOn
@@ -97,7 +88,6 @@ def TrayIconClicked():
 
 def ModelLoop():
     audio_model = whisper.load_model(model)
-    print("Model Active")
     while True:
         if sound_recording_queue.empty() == False:
             tray.setIcon(robot_face)
@@ -107,12 +97,16 @@ def ModelLoop():
             predicted_text = result["text"]
             if DictationOn == True:
                 HandleOutputOfDictation(predicted_text)
-                tray.setIcon(MicOn)
+            if DictationOn == True: 
+               tray.setIcon(MicOn)
             if DictationOn == False:
                tray.setIcon(MicOff)     
 
 def OpenConfigFileInEditor():
     subprocess.call(["xdg-open", config_file_path])
+
+#Create Temporary Folder
+temporary_folder = tempfile.mkdtemp()
 
 #load config file 
 home_folder_path = os.path.expanduser('~')
@@ -124,21 +118,26 @@ if not os.path.exists(config_file_path):
 ConfigFile = configparser.ConfigParser()
 ConfigFile.read(config_file_path)
 
+#create background thead for model
 model = ConfigFile['ModelAttributes']['model']
 english = bool(ConfigFile['ModelAttributes']['english'])
-energy = int(ConfigFile['ModelAttributes']['energy'])
-dynamic_energy = bool(ConfigFile['ModelAttributes']['dynamic_energy'])
-pause = float(ConfigFile['ModelAttributes']['pause'])
-auto_mic_off_time = int(ConfigFile['VoiceTypingAttributes']['auto_mic_off_time'])
 
-#create background thead for model
 sound_recording_queue = queue.SimpleQueue()
 model_thread = threading.Thread(target=ModelLoop)
 model_thread.daemon = True
 model_thread.start()
 
+#create listener 
+microphone_device = speech_recognition.Microphone(sample_rate=16000)
+speech_listener = speech_recognition.Recognizer()
+
+speech_listener.energy_threshold = int(ConfigFile['ModelAttributes']['energy'])
+speech_listener.dynamic_energy_threshold = bool(ConfigFile['ModelAttributes']['dynamic_energy'])
+speech_listener.pause_threshold = float(ConfigFile['ModelAttributes']['pause'])
+auto_mic_off_time = int(ConfigFile['VoiceTypingAttributes']['auto_mic_off_time'])
+
 #Create background thread for microphone listener 
-thread = threading.Thread(target=MicLoop)
+thread = threading.Thread(target=MicLoop,args=(speech_listener,) )
 thread.daemon = True
 thread.start()
 
