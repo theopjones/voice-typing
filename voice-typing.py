@@ -70,7 +70,8 @@ def MicLoop(speech_listener):
          if (int(time.time()) - last_dictation_time) > auto_mic_off_time:
                 DictationOn = False
                 tray.setIcon(MicOff)
-         ListenThenSendAudioToWhisper(sound_recording_queue,speech_listener)                     
+         else:
+            ListenThenSendAudioToWhisper(sound_recording_queue,speech_listener)                     
 
 def TrayIconClicked(): 
     global DictationOn
@@ -127,7 +128,7 @@ model_thread.daemon = True
 model_thread.start()
 
 #create listener 
-microphone_device = speech_recognition.Microphone(sample_rate=16000)
+microphone_device = speech_recognition.Microphone(sample_rate=44100)
 speech_listener = speech_recognition.Recognizer()
 
 speech_listener.energy_threshold = int(ConfigFile['ModelAttributes']['energy'])
